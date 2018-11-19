@@ -16,12 +16,6 @@
 # For support refer to the snapcraft section in the Snapcraft Forum:
 # https://forum.snapcraft.io/c/snapcraft
 
-# All following comments, including this one, are designed to be stripped
-# before contributing the recipe to the upstream
-
-# my-awesome-app, my-app-name, my-app-command, my-app-launch, my-app-part
-# are placeholders text meant to be replaced by appropriate content
-
 name: go-mtpfs-brlin
 summary: Mount MTP devices over FUSE
 description: |
@@ -34,79 +28,38 @@ description: |
   THIS IS NOT AN OFFICIAL DISTRIBUTION!  Refer the issue tracker for any problems regarding this snap:
   https://github.com/Lin-Buo-Ren/go-mtpfs-snap/issues
 
-# The path of icon to represent the snap, relative to the source tree directory
-# Only PNG or SVG image is supported, dimension must be greater than 256x256px
 icon: snap/gui/placeholder.png
 
-# Version string just for humans, typically '1.2+git' or '1.3.2'
-# The wrapping single quotes are often required to avoid the version string
-# being accidentally interpreted as a YAML non-string(like '1', '1.2').
-# http://yaml.org/type
-# https://arp242.net/weblog/yaml_probably_not_so_great_after_all.html#surprising-behaviour
-version: determined-by-version-script
+#version: determined-by-adopt-info
+adopt-info: go-mtpfs
 
-# (OPTIONAL) The version string can also be dynamically determined via scripting
-# , in this case the value of the `version` key will be ignored (but the key is
-# still required).
-# NOTE: The resulting version string cannot be longer than 32 characters
-version-script: ./snap/local/utilities/set-snap-version.bash
-#version-script: git -C parts/my-app-part/src describe --always --dirty --tags
+# Reasons of using classic confinement:
+# * Currently the fuse-support interface doesn't support unprivileged mounts
+#   https://github.com/snapcore/snapd/blob/master/interfaces/builtin/fuse_support.go
+# * This fs mounter is expected to be run most user-writable locations rather than snap-specific writable directories that are allowed by the fuse-support interface
+confinement: classic
+grade: devel
 
-# Security confinement
-# Use `devmode` to getting started
-# Flip to `strict` once you have the right plugs and slots,
-# or `classic` once you determine that strict confinement is not currently possible
-confinement: strict
-
-# Snap Grade
-# Use `devel` to getting started
-# Flip to `stable` once you determine that the snap is matured, only `stable` grade
-# snaps can be promoted to `candidate` and `stable` channels
-grade: stable
-
-# Refer the following documentation for asserting interface plugs and slots in a security confined snap:
-# Interface management - doc - snapcraft.io
-# https://docs.snapcraft.io/interface-management/6154
-# Supported interfaces - doc - snapcraft.io
-# https://docs.snapcraft.io/supported-interfaces/7744
-# Non-A/C: Non-autoconnect interface
-plugs:
-  # For snaps with a graphical user interface:
-  desktop:
-  desktop-legacy:
-  x11:
-  unity7:
-  wayland:
-
-  # Storage access
+#plugs:
+  ## Storage access
   #home:
   #removable-media: # Non-A/C
 
-  # Network access
-  #network:
+  #fuse-support:
+
+  #hardware-observe:
+
+  #raw-usb:
 
 #slots:
 
-# Apps that are exposed by the snap package
-# If the _app_name_ is identical with the _snap_name_ it can be directly run
-# with `_snap_name_` or `snap run _snap_name_` commands, otherwise it can only be run
-# via `_snap_name_._app_name_` or `snap run _snap_name_._app_name_`
 apps:
-  go-mtpfs:
-    # The command to run the application, the base command should be an *relative path* to an executable file rooted from the `prime` directory (for `classic` confinement compatiblity, where command search PATHs under $SNAP isn't set for library compatiblity reasons).  The arguments are usually other launchers' *absolute path* rooted from the $SNAP environment variable that are *stacked over* previous ones to consolidate their runtime environment modifications.
-    # NOTE: The right angle bracket at the beginning of the value of the `command` keyword starts a YAML folded style block scalar, refer the following spec document for more info: http://yaml.org/spec/1.2/spec.html#id2796251
+  go-mtpfs-brlin:
     command: >
-      bin/go-mtpfs-launch
-      go-mtpfs
-    # If the providing part of the app. has a desktop entry, specify its path relative to the `prime` directory.
-    # If the packaging target doesn't provide a desktop entry, ignore the `desktop` key and implement a desktop entry in `/snap/gui`
-    #desktop: share/applications/go-mtpfs.desktop
+      bin/classic-launch
+      "${SNAP}"/bin/go-mtpfs-launch
+      "${SNAP}"/bin/"${SNAPCRAFT_PROJECT_NAME}"
 
-# Run `snapcraft help sources` for supported keywords on pulling a part's source ingredients
-# Run `snapcraft plugins` for supported build helper plugins
-# Run `snapcraft help plugins` for supported keywords on building a part
-# For `override-*` scriptlets used to modify behavior of certain part's lifecycle phase, check out:
-# https://docs.snapcraft.io/scriptlets/4892
 parts:
   # Assets from the snap packaging, refer each READMEs under the `snap` folder for more information
   assets:
@@ -119,10 +72,80 @@ parts:
     - -utilities
     - -patches
 
-  go-mtpfs:
-    #source:
-    #source-type:
-    #source-tag:
-    #source-depth:
+  # The version provided by Ubuntu 16.04(1.6.2) is too old
+  go:
+    source-tag: go1.11.2
+    source-depth: 1
 
-    plugin: nil
+  # Recent release of libusb, probably valuable to keep it to avoid low-level bugs
+  #libusb:
+    #source: https://github.com/libusb/libusb.git
+    #source-tag: v1.0.22
+    #source-depth: 1
+
+    #plugin: autotools
+    #build-packages:
+    #- libudev-dev
+
+    #filesets:
+      #library-headers:
+      #- include
+      #library-libtool:
+      #- lib/*.la
+      #library-pkgconfig:
+      #- lib/pkgconfig
+      #library-shared:
+      #- lib/*.so*
+      #library-static:
+      #- lib/*.a
+
+    #stage:
+    #- $library-headers
+    #- $library-pkgconfig
+    #- $library-shared
+    #- $library-static
+
+    #prime:
+    #- $library-shared
+
+  go-mtpfs:
+    after:
+    - go
+    #- libusb
+
+    source: https://github.com/hanwen/go-mtpfs.git
+    source-depth: 1
+    override-pull: |
+      set \
+        -o errexit \
+        -o nounset
+      snapcraftctl pull
+
+      go_mtpfs_revision="$(
+        git describe \
+          --always \
+          --dirty=-d \
+          --tags
+      )"
+
+      packaging_revision="$(
+        git -C .. describe \
+          --abbrev=4 \
+          --always \
+          --dirty=-d \
+          --match=nothing
+      )"
+
+      snapcraftctl set-version \
+        "${go_mtpfs_revision}"-snap-"${packaging_revision}"
+
+    plugin: go
+    go-importpath: github.com/hanwen/go-mtpfs
+    build-packages:
+    - libusb-1.0-0-dev
+    stage-packages:
+    - libudev1
+    - libusb-1.0-0
+
+    organize:
+      bin/go-mtpfs: bin/${SNAPCRAFT_PROJECT_NAME}
