@@ -142,6 +142,7 @@ parts:
     plugin: go
     go-importpath: github.com/hanwen/go-mtpfs
     build-packages:
+    - pkg-config
     - libusb-1.0-0-dev
     stage-packages:
     - libudev1
