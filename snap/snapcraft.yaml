@@ -16,7 +16,7 @@
 # For support refer to the snapcraft section in the Snapcraft Forum:
 # https://forum.snapcraft.io/c/snapcraft
 
-name: go-mtpfs-brlin
+name: go-mtpfs
 summary: Mount MTP devices over FUSE
 description: |
   Go-mtpfs is a simple FUSE filesystem for mounting Android devices as a MTP device.
@@ -146,6 +146,3 @@ parts:
     stage-packages:
     - libudev1
     - libusb-1.0-0
-
-    organize:
-      bin/go-mtpfs: bin/${SNAPCRAFT_PROJECT_NAME}
