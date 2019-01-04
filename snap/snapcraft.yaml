@@ -72,11 +72,6 @@ parts:
     - -utilities
     - -patches
 
-  # The version provided by Ubuntu 16.04(1.6.2) is too old
-  go:
-    source-tag: go1.11.2
-    source-depth: 1
-
   # Recent release of libusb, probably valuable to keep it to avoid low-level bugs
   #libusb:
     #source: https://github.com/libusb/libusb.git
@@ -109,10 +104,6 @@ parts:
     #- $library-shared
 
   go-mtpfs:
-    after:
-    - go
-    #- libusb
-
     source: https://github.com/hanwen/go-mtpfs.git
     source-depth: 1
     override-pull: |
@@ -144,6 +135,8 @@ parts:
     build-packages:
     - pkg-config
     - libusb-1.0-0-dev
+    build-snaps:
+    - go # or go/1.11/stable
     stage-packages:
     - libudev1
     - libusb-1.0-0
